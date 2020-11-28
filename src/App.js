@@ -3,7 +3,7 @@ import Board from './components/Board';
 function App() {
   return (
     <div className="App">
-      <Board width={10} height={20}></Board>
+      <Board width={20} height={10}></Board>
     </div>
   );
 }

@@ -25,7 +25,7 @@ class Board extends React.Component {
             let curr_row = []
             for (let col = 0; col < this.width; col++) {
                 let nodeId = `${row}-${col}`;
-                curr_row.push(new Node("empty", 0, Infinity))
+                curr_row.push(new Node("empty", 0, 5))
                 cells.push(<td id= {nodeId} className = "board-columns" onClick ={() => this.highlightCell(nodeId)}>
                     {`(${curr_row[col].flow},${curr_row[col].capacity})`}
                 </td>);
