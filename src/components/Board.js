@@ -6,24 +6,29 @@ class Board extends React.Component {
    
     constructor(props) {
         super(props);
-        this.height = props.height;
-        this.width =  props.width;
-        this.gridArray =  [];
-        this.nodeType = "server"; 
-        this.possibleNodeTypes = ["empty", "server", "connection"];
+        this.state = {
+            height : props.height,
+            width :  props.width,
+            board: null,
+            gridArray :  [],
+            nodeType : "server",
+            possibleNodeTypes : ["empty", "server", "connection"]
+
+        }   
     }
 
-    createInteractiveBoard = () => {
-        this.createBoard();
-        this.eventListeners();
-    }
+    // createInteractiveBoard = () => {
+    //     this.createBoard();
+    //     this.eventListeners();
+    // }
     
     createBoard = () => {
         let tableRows = [];
-        for (let row = 0; row < this.height; row++) {
+        let gridArray_tmp = [];
+        for (let row = 0; row < this.state.height; row++) {
             let cells = []
             let curr_row = []
-            for (let col = 0; col < this.width; col++) {
+            for (let col = 0; col < this.state.width; col++) {
                 let nodeId = `${row}-${col}`;
                 curr_row.push(new Node("empty", 0, 5))
                 cells.push(<td id= {nodeId} className = "board-columns" onClick ={() => this.highlightCell(nodeId)}>
@@ -31,61 +36,89 @@ class Board extends React.Component {
                 </td>);
             }
             tableRows.push(<tr id= {`r${row}`} className = "board-rows">{cells}</tr>); 
-            this.gridArray.push(curr_row)
+            gridArray_tmp.push(curr_row)
         }
-        return tableRows;
+        this.setState({
+            gridArray : gridArray_tmp,
+            board: (
+                <table className="board">
+                    <tbody>
+                        {tableRows}
+                    </tbody>
+                </table>
+            ) 
+        })
+        // return tableRows;
     };
 
     highlightCell = (nodeId) => {
         // console.log("Clicked on " + nodeId);
+        // get node's coordinate in the grid
         let currNode = document.getElementById(nodeId);
         let nodeCoord = nodeId.split("-");
+
+        // split into array of class attributes
         let classArr = currNode.className.split(" ");
         
+        let currNodeStatus = this.state.gridArray[nodeCoord[0]][nodeCoord[1]].type;
         
-        let currNodeStatus = this.gridArray[nodeCoord[0]][nodeCoord[1]].type;
-        // console.log("currNodeStatus = " + currNodeStatus);
-        // console.log("this.nodeType = " + this.nodeType);
-        
-        if (this.nodeType !== currNodeStatus) {
-            // if the node type is different, the node is changing class
-            // // remove all special nodeStatus in the className HTML attribute
-            for (let i = 0; i < this.possibleNodeTypes.length; i++) {
-                let index = classArr.indexOf(this.possibleNodeTypes[i]);
+        // node type after update
+        let finalNodeType = this.state.nodeType;
+
+        if (finalNodeType!== currNodeStatus) {
+            // if the node type is different, the node is changing class.
+           
+            // thus, we remove all special nodeStatus in the class attribute
+            for (let i = 0; i < this.state.possibleNodeTypes.length; i++) {
+                let index = classArr.indexOf(this.state.possibleNodeTypes[i]);
                 if (index !== -1) {
                     classArr.splice(index,1);
                 }
             } 
-            classArr.push(this.nodeType);
-            // console.log("change class");
-            this.gridArray[nodeCoord[0]][nodeCoord[1]].type = this.nodeType;
-            currNode.textContent = this.nodeType;
+            // insert the new node type to the class attribute
+            classArr.push(finalNodeType);
         } else {
+            
             // else if we are clicking on same node, just clear
-            let indexOfHighlighted = classArr.indexOf(this.nodeType);
+            let indexOfHighlighted = classArr.indexOf(finalNodeType);
             classArr.splice(indexOfHighlighted, 1);
-            this.gridArray[nodeCoord[0]][nodeCoord[1]].type = this.possibleNodeTypes[0];
-            currNode.textContent =  this.possibleNodeTypes[0];
+            // finalNodeType is an "empty" node
+            finalNodeType = this.state.possibleNodeTypes[0];
+    
         }
+        // set node's new class attribute
         currNode.className = classArr.join(" ");
+        // change text content of current node to display its node status 
+        currNode.textContent =  finalNodeType;
+
+        // deep copy to update array in state
+        let gridArray_tmp = JSON.parse(JSON.stringify(this.state.gridArray));
+        gridArray_tmp[nodeCoord[0]][nodeCoord[1]].type = finalNodeType;
+
+        this.setState({
+            nodeType : finalNodeType,
+            gridArray: gridArray_tmp
+        }, ()=> {
+            console.log(this.state.gridArray[nodeCoord[0]][nodeCoord[1]]);
+        })
+        
         // console.log(this.nodeType);
     }
 
     setNodeType = (index) => {
-        this.nodeType = this.possibleNodeTypes[index];
+        this.setState( {
+                nodeType : this.state.possibleNodeTypes[index]
+            }
+        );  
     }
     
     render() {
         return(
             <div className="boardDiv">
-                <p>{this.nodeType}</p>
+                <p>{this.state.nodeType}</p>
                 <button onClick = {()=> this.setNodeType(1)}>Server Node</button>
                 <button onClick = {()=> this.setNodeType(2)}>Connection Node</button>
-                <table className = "board">
-                    <tbody>   
-                        {this.createBoard()}
-                    </tbody>
-                </table>
+                {this.state.board === null? this.createBoard(): this.state.board}
             </div>
         )
     }
