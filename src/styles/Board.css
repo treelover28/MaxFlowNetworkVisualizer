@@ -6,15 +6,30 @@
 
 .board-rows .board-columns {
   border: 2px solid #d1e4f0;
-  padding: 20px 10px;
+  padding: 20px 20px;
+  /* margin: 20px 20px; */
 }
 
 .board {
   border-collapse: collapse;
   margin: 1.5em;
   padding: 1.5em;
-  /* width: 60%; */
-  /* height: 100%; */
+  width: 80%;
+  height: 100%;
+}
+
+#network-form {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 40%;
+  padding: 10px 10px;
+  margin: 10px 15px;
+}
+
+#network-form input {
+  display: inline-block;
+  text-align: center;
 }
 
 .server {
@@ -23,4 +38,17 @@
 
 .connection {
   background-color: lightblue;
+}
+
+.connected-server {
+  background-color: rgb(66, 149, 66);
+}
+
+.rheader {
+  display: flex;
+  justify-content: center;
+}
+
+.cheader {
+  text-align: center;
 }
