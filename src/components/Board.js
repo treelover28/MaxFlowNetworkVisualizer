@@ -100,7 +100,6 @@ class Board extends React.Component {
     };
 
     
-   
     networkDefinitionHandler = (event) => {
         this.setState({
             networkDefinition: event.target.value

@@ -14,9 +14,9 @@ class PathFinder {
         let sourceTargetVector = this.processNetworkDefinition();
         // depending on this.strategy, dispatch to different function 
         if (this.strategy === 'bfs') {
-            return this.BFS(this.gridArray, sourceTargetVector);
+            return this.findPath(this.gridArray, sourceTargetVector, "bfs");
         } else if (this.strategy === 'dfs') {
-            return this.DFS(this.gridArray, sourceTargetVector);
+            return this.findPath(this.gridArray, sourceTargetVector, "dfs");
         } else {
             return "Unknown Pathfinding strategy";
         }
@@ -48,7 +48,7 @@ class PathFinder {
         return sourceTargetDict;
     }
 
-    BFS = (gridArray, sourceTargetDict) => {
+    findPath = (gridArray, sourceTargetDict, strategy) => {
         let currNodeCoord = null;
         let currNode = null;
         for (const [source, targets] of sourceTargetDict) {
@@ -59,7 +59,7 @@ class PathFinder {
                 let targetNode = target[0];
                 let parsedTargetNode = this.nodeParser(targetNode);
                 let capacity = +target[1];
-                let foundPath = this.BFSHelper(gridArray, source, targetNode);
+                let foundPath = this.pathFinderHelper(gridArray, source, targetNode, strategy);
                 if (foundPath === "No Path found") {
                     alert("No path found between " + source + " and " + targetNode);
                     return "Please redefine your network by spreading the nodes out further";
@@ -99,11 +99,10 @@ class PathFinder {
         return +nodeA[0] === +nodeB[0] && +nodeA[1] === +nodeB[1]; 
     }
 
-    BFSHelper(gridArray, source, target) { 
+    pathFinderHelper(gridArray, source, target, strategy) { 
         let fringe = [source] 
         // parse string representation of a Node to an object
         let parsedSource = this.nodeParser(source);
-        let parsedTarget = this.nodeParser(target);
 
         let currX = +parsedSource[0];
         let currY = +parsedSource[1];
@@ -119,13 +118,18 @@ class PathFinder {
         visitedNodes.add(source);
 
         while (fringe.length !== 0) {
-            currNode = fringe.shift();
+            if (strategy == "bfs"){
+                currNode = fringe.shift();
+            }
+            else {
+                // DFS 
+                currNode = fringe.pop();
+            }
+            
             let parsedNode = this.nodeParser(currNode);
-            console.log("currNode: " + currNode);
-            // console.log(typeof currNode);
+            
             currX = +parsedNode[0];
             currY = +parsedNode[1];
-            // console.log(`<${currX},${currY}>`);
             
             if (currNode === target) {
                 break;
@@ -165,7 +169,6 @@ class PathFinder {
             }    
         }
 
-        // console.log("finished BFS-helper");
         if (currNode === target) {
             let path = []
             // change currNode back from object to its string representation
@@ -176,17 +179,10 @@ class PathFinder {
                 currNode = parent.get(currNode);
             }
             path.unshift(parsedSource);
-            console.log("path: " + path);
             return path;
         }
-        console.log("no path found");
         return "No Path found";
     }
-
-    DFS = (gridArray, sourceTargetDict) => {
-        return null;
-    }
-
 }
 
 export default PathFinder;

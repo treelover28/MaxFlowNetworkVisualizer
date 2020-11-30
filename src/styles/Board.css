@@ -36,12 +36,9 @@
   background-color: rgb(251, 161, 151);
 }
 
-.connection {
-  background-color: lightblue;
-}
-
 .connected-server {
   background-color: rgb(66, 149, 66);
+  color: #fefefe;
 }
 
 .rheader {
