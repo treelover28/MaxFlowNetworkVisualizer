@@ -40,16 +40,16 @@ class Board extends React.Component {
         let idKey;
         let className;
         let value;
-        let countEmpty = 0;
-        let countServer = 0;
+        
         for (let row = 0; row < this.state.height + 1; row++) {
             let cells = []
             for (let col = 0; col < this.state.width + 1; col++) {
+                let style = {};
                 // if col = 0, push row number to first item 
                 if (col === 0 & row === 0) {
                     idKey= "header";
                     className = "board-rows header";
-                    value = "Row/Col";
+                    value = "X / Y";
                 }
                 else if (col === 0) {
                     // at column 0, but a non-zero row, fill in row number
@@ -66,25 +66,32 @@ class Board extends React.Component {
                     // push node object into GridArray
                     let newNode = this.state.gridArray[row-1][col-1];
                     idKey = `${row - 1}-${col-1}`;
-                    value = `${newNode.flow}/${newNode.capacity}`;
+                    value = " ";
                     className = "board-columns";
+                    
                     if (newNode.type !== "empty") {
                         className += ` ${newNode.type}`;
-                        countServer++; 
-                    } else{
-                        countEmpty++;
+                        
+                        if (newNode.type === "connection") {
+                            style = {backgroundColor: newNode.color};
+                            value = `${newNode.flow}/${newNode.capacity}`;
+                        }
+                        if(newNode.type === "connected-server") {
+                            style = {backgroundColor: newNode.color};
+                            value = "server";
+                        }  
                     }
+                    
+
                 }
                
-                cells.push(<td key = {idKey} id= {idKey} className = {className}>{value}</td>);  
+                cells.push(<td key = {idKey} id= {idKey} className = {className} style = {style}>{value}</td>);  
             }
             idKey = `r${row}`;
             className = "board-rows";
             value = cells;
             tableRows.push(<tr key ={idKey} id= {idKey} className = {className}>{value}</tr>); 
         }
-        console.log("empty: " + countEmpty + " , server: " + countServer);
-
         return (
                 <table className="board">
                     <tbody>{tableRows}</tbody>
@@ -92,60 +99,7 @@ class Board extends React.Component {
         );
     };
 
-    // highlightCell = (nodeId) => {
-    //     // get node's coordinate in the grid
-    //     let currNode = document.getElementById(nodeId);
-    //     let nodeCoord = nodeId.split("-");
-
-    //     // split into array of class attributes
-    //     let classArr = currNode.className.split(" ");
-        
-    //     let currNodeStatus = this.state.gridArray[nodeCoord[0]][nodeCoord[1]].type;
-        
-    //     // node type after update
-    //     let finalNodeType = this.state.nodeType;
-
-    //     if (finalNodeType!== currNodeStatus) {
-    //         // if the node type is different, the node is changing class.
-           
-    //         // thus, we remove all special nodeStatus in the class attribute
-    //         for (let i = 0; i < this.state.possibleNodeTypes.length; i++) {
-    //             let index = classArr.indexOf(this.state.possibleNodeTypes[i]);
-    //             if (index !== -1) {
-    //                 classArr.splice(index,1);
-    //             }
-    //         } 
-    //         // insert the new node type to the class attribute
-    //         classArr.push(finalNodeType);
-    //     } else {
-    //         // else if we are clicking on same node, just clear
-    //         let indexOfHighlighted = classArr.indexOf(finalNodeType);
-    //         classArr.splice(indexOfHighlighted, 1);
-    //         // finalNodeType is an "empty" node
-    //         finalNodeType = this.state.possibleNodeTypes[0];
     
-    //     }
-    //     // set node's new class attribute
-    //     currNode.className = classArr.join(" ");
-
-    //     // deep copy to update array in state
-    //     let gridArray_tmp = _.cloneDeep(this.state.gridArray);
-    //     gridArray_tmp[nodeCoord[0]][nodeCoord[1]].type = finalNodeType;
-    //     alert(gridArray_tmp[nodeCoord[0]][nodeCoord[1]])
-
-    //     this.setState({
-    //         nodeType : finalNodeType,
-    //         gridArray: gridArray_tmp
-    //     }, ()=> {
-    //         console.log(this.state.gridArray[nodeCoord[0]][nodeCoord[1]]);
-    //     })
-        
-    // }
-
-    // setNodeType = (index) => {
-    //     this.setState( {nodeType : this.state.possibleNodeTypes[index]});  
-    // }
-
    
     networkDefinitionHandler = (event) => {
         this.setState({
@@ -156,25 +110,13 @@ class Board extends React.Component {
     }
 
     getGeneratedGrid = (event) => {
-        // alert("Get executed");
-        // alert(this.state.networkDefinition);
         let rawDefinition = this.state.networkDefinition.trim();
-        // let edgeDefinitions = rawDefinition.split(";").filter(x=>x);
         // get deep copy of gridArray from state
         let gridArrGen = _.cloneDeep(this.state.gridArray);
         let pathFinder = new PathFinder(gridArrGen, rawDefinition, "bfs");
 
         let grid = pathFinder.getGridWithPaths();
-        // // set server
-        // edgeDefinitions.forEach(edgeDef => {
-        //     let edgeDefArr = edgeDef.split("->").filter(x=>x);
-        //     let serverA = edgeDefArr[0].trim();
-        //     let capacity = +edgeDefArr[1].trim();
-        //     let serverB = edgeDefArr[2].trim();
-           
-        //     gridArrGen[+serverA[1]][+serverA[3]] = new Node(this.state.possibleNodeTypes[1], 0, capacity)
-        //     gridArrGen[+serverB[1]][+serverB[3]] = new Node(this.state.possibleNodeTypes[1], 0, capacity)
-        // });
+    
         return grid;  
     }
 
@@ -213,7 +155,6 @@ class Board extends React.Component {
         let board = null
         return(
             <article className="max-flow-visualizer">
-                <h1>MAX FLOW VISUALIZER BY KHAI LAI</h1>
                 <div className="boardDiv">
                     <form id="network-form" onSubmit={(event) => {board = this.submitHandler(event)}}>
                         <label htmlFor="network-def"> Network Definition</label>
