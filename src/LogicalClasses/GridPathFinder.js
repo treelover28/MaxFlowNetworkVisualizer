@@ -1,22 +1,22 @@
 import Node from "./Node";
 import {getRandomColor} from "./Misc";
+import _ from "lodash";
 
 
-class PathFinder {
+class GridPathFinder {
     constructor(gridArray,networkDefinition,strategy) {
         this.gridArray = gridArray;
         this.networkDefinition = networkDefinition;
         this.strategy = strategy.trim().toLowerCase();
+        this.allowedStrategies = ["bfs", "dfs"];
     }
 
     getGridWithPaths = () => {
         // process network definition to get sourceTargetDict
         let sourceTargetVector = this.processNetworkDefinition();
         // depending on this.strategy, dispatch to different function 
-        if (this.strategy === 'bfs') {
-            return this.findPath(this.gridArray, sourceTargetVector, "bfs");
-        } else if (this.strategy === 'dfs') {
-            return this.findPath(this.gridArray, sourceTargetVector, "dfs");
+        if (this.allowedStrategies.includes(this.strategy)) {
+            return this.findPathsOnGrid(this.gridArray, sourceTargetVector, this.strategy);
         } else {
             return "Unknown Pathfinding strategy";
         }
@@ -48,11 +48,19 @@ class PathFinder {
         return sourceTargetDict;
     }
 
-    findPath = (gridArray, sourceTargetDict, strategy) => {
+    findPathsOnGrid = (gridArray, sourceTargetDict, strategy) => {
         let currNodeCoord = null;
         let currNode = null;
+        
+        // keeps track of paths from different sources to their destinations
+        let sourcesPathsList = new Map();
+
         for (const [source, targets] of sourceTargetDict) {
             let parsedSource = this.nodeParser(source);
+            
+            // add parseSource to sourcesPathsList with an empty list of paths at first
+            sourcesPathsList.set(parsedSource, []);
+
             let randomColor = getRandomColor();
             targets.forEach(target => {
 
@@ -64,6 +72,11 @@ class PathFinder {
                     alert("No path found between " + source + " and " + targetNode);
                     return "Please redefine your network by spreading the nodes out further";
                 }
+
+                // add new paths to map
+                let currPathsFromSourceList = sourcesPathsList.get(parsedSource);
+                currPathsFromSourceList.push(_.cloneDeep(foundPath));
+                sourcesPathsList.set(parsedSource, currPathsFromSourceList);
 
                 let i = 0;
                 while (foundPath.length !== 0) {
@@ -77,7 +90,7 @@ class PathFinder {
                         currNode.capacity = capacity;  
                         currNode.color = randomColor;
                     }
-                    // nodes from the same source gets the same color
+                    // nodes from the same source gets the same color including the source itself but not the destination
                     if (i === 0){
                         currNode.color = randomColor;
                     }
@@ -87,7 +100,7 @@ class PathFinder {
         }
         this.gridArray = gridArray;
         
-        return gridArray; 
+        return [gridArray, sourcesPathsList]; 
     }
 
     nodeParser = (coordString) => {
@@ -118,7 +131,8 @@ class PathFinder {
         visitedNodes.add(source);
 
         while (fringe.length !== 0) {
-            if (strategy == "bfs"){
+            if (strategy === "bfs"){
+                // BFS
                 currNode = fringe.shift();
             }
             else {
@@ -135,8 +149,6 @@ class PathFinder {
                 break;
             }
             
-            // visitedNode.add(currNode);
-            // console.log("enter bfs-helper while");
             let rightNode = "(" + (currX + 1) + "," + currY +")";
             let leftNode = "(" + (currX  - 1) + "," + currY +")";
             let topNode = "(" + (currX) + "," + (currY + 1) +")";
@@ -144,26 +156,22 @@ class PathFinder {
 
             if ((currX+1) < gridArray.length && !visitedNodes.has(rightNode) && (gridArray[currX + 1][currY].type === "empty" || rightNode === target)) {
                 fringe.push(rightNode);
-                // console.log("added node " + rightNode);
                 parent.set(rightNode, currNode);
                 visitedNodes.add(rightNode);
             }
             if ((currX-1) >= 0 && !visitedNodes.has(leftNode) && (gridArray[currX - 1][currY].type === "empty"  || leftNode === target)) {
                 fringe.push(leftNode);
-                // console.log("added node " + leftNode);
                 parent.set(leftNode, currNode);
                 visitedNodes.add(leftNode);
             }
             if ((currY + 1) < gridArray[0].length && !visitedNodes.has(topNode) && (gridArray[currX][currY + 1].type === "empty"  || topNode === target)) {
                 fringe.push(topNode);
                 parent.set(topNode, currNode);
-                // console.log("added node " + topNode);
                 visitedNodes.add(topNode);
             }
             if ((currY - 1) >= 0 && !visitedNodes.has(botNode) && (gridArray[currX][currY - 1].type === "empty"  || botNode === target) ) {
                 fringe.push(botNode);
                 parent.set(botNode, currNode);
-                // console.log("added node " + botNode);
                 visitedNodes.add(botNode);
 
             }    
@@ -172,17 +180,15 @@ class PathFinder {
         if (currNode === target) {
             let path = []
             // change currNode back from object to its string representation
-            // currNode = `(${currNode[0]},${currNode[1]})`;
-            while(parent.get(currNode) !== null) {
+            while(currNode !== null) {
                 console.log("travelling up!");
                 path.unshift(this.nodeParser(currNode));
                 currNode = parent.get(currNode);
             }
-            path.unshift(parsedSource);
             return path;
         }
         return "No Path found";
     }
 }
 
-export default PathFinder;
+export default GridPathFinder;

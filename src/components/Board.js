@@ -1,6 +1,6 @@
 import React from "react";
 import Node from "../LogicalClasses/Node";
-import PathFinder from "../LogicalClasses/PathFinder";
+import GridPathFinder from "../LogicalClasses/GridPathFinder";
 
 import _ from "lodash";
 
@@ -15,7 +15,8 @@ class Board extends React.Component {
             gridArray :  this.getInitializeGrid(),
             nodeType : "server",
             possibleNodeTypes : ["empty", "server", "connection", "connected-server"],
-            networkDefinition: "Format: (x1,y1)->capacity->(x2,y2);"
+            networkDefinition: "Format: (x1,y1)->capacity->(x2,y2);",
+            paths: []
 
         } 
     }
@@ -112,9 +113,15 @@ class Board extends React.Component {
         let rawDefinition = this.state.networkDefinition.trim();
         // get deep copy of gridArray from state
         let gridArrGen = _.cloneDeep(this.state.gridArray);
-        let pathFinder = new PathFinder(gridArrGen, rawDefinition, "bfs");
+        let pathFinder = new GridPathFinder(gridArrGen, rawDefinition, "bfs");
 
-        let grid = pathFinder.getGridWithPaths();
+        let gridPaths  = pathFinder.getGridWithPaths();
+        let grid = gridPaths[0];
+        let paths = gridPaths[1];
+        
+        this.setState({
+            paths: paths
+        });
     
         return grid;  
     }
