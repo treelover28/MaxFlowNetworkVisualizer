@@ -26,7 +26,9 @@ class Board extends React.Component {
             source: "null",
             sink: "null",
             hasNetworkBoard : false,
-            strategy: "None"
+            strategy: "None",
+            maxFlowReached : false,
+            currentFlow: 0
         } 
     }
 
@@ -273,20 +275,28 @@ class Board extends React.Component {
         return improvedGridArray;   
     }
 
-    setStrategy = (strategy) => {
+    runMaxFlowAlgorithm = (strategy) => {
         this.setState({
             strategy: strategy
         }, ()=> {
             let grid = this.maxFlowBoard(strategy);
             if (typeof grid !== "string") {
+                let parsedSink = nodeParser(this.state.source, grid.height, grid[0].height);
+                let currFlow = grid[parsedSink[0]][parsedSink[1]].flow;
+
                 this.setState({
-                    gridArray : grid
+                    gridArray : grid,
+                    currentFlow: currFlow
                 }, ()=> {
                     return this.drawBoard();
                 }); 
             }
-            alert("Max Flow reached");
-            
+            // alert("Max Flow reached");
+            else {
+                this.setState({
+                    maxFlowReached : true
+                })
+            }
         })
     }
 
@@ -294,18 +304,22 @@ class Board extends React.Component {
         // Form submission automattically rerender/refreshes the page
         // prevent this behavior to display board
         event.preventDefault();
-        return this.generateBoard();
+        this.setState({
+            currentFlow : 0,
+            maxFlowReached : false
+        }, () => {
+            return this.generateBoard();
+        });
     }
 
     render() {
         let board = null;
-
         let algoChooser = (
             <div id="hyperparam">
-                <h2>Please choose which max flow algorithm you wish to use:</h2>
-                <button onClick={()=> {board = this.setStrategy("Ford-Fulkerson")}}>Ford-Fulkerson</button>
+                <h3>The flow through your network may still be improve! Please choose which max flow algorithm you wish to use:</h3>
+                <button onClick={()=> {board = this.runMaxFlowAlgorithm("Ford-Fulkerson")}}>Ford-Fulkerson</button>
                 <p>Description of Ford-Fulkerson... blah blah</p>
-                <button onClick={()=> {board = this.setStrategy("Edmonds-Karp")}}>Edmonds-Karp</button>
+                <button onClick={()=> {board = this.runMaxFlowAlgorithm("Edmonds-Karp")}}>Edmonds-Karp</button>
                 <p>Description of Edmonds-Karp... blah blah</p>
                 {this.state.strategy !== "None"? (
                     <div>
@@ -315,6 +329,13 @@ class Board extends React.Component {
             </div>
         );
 
+        let currentFlowReport = (
+            <div id="flow-report">
+                <h2>Current flow through this graph is: <h1 id="flow-value">{this.state.currentFlow}</h1> </h2>
+            </div>
+        );
+
+        
 
         return(
             <article className="max-flow-visualizer">
@@ -328,7 +349,9 @@ class Board extends React.Component {
                             </textarea>
                         <input type="submit" value="Submit"></input>
                     </form>
-                    {this.state.hasNetworkBoard? algoChooser: null}
+                    {/* Only display algorithm choosing panel while max flow has not been reached */}
+                    {this.state.hasNetworkBoard && !this.state.maxFlowReached? algoChooser: null}
+                    {this.state.hasNetworkBoard? currentFlowReport: null};
                     {board == null? this.drawBoard() : board}
                 </div>
             </article>
