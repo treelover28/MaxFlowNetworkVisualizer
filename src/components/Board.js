@@ -16,8 +16,9 @@ class Board extends React.Component {
             nodeType : "server",
             possibleNodeTypes : ["empty", "server", "connection", "connected-server"],
             networkDefinition: "Format: (x1,y1)->capacity->(x2,y2);",
-            paths: []
-
+            paths: [], 
+            source: "null",
+            sink: "null"
         } 
     }
 
@@ -80,10 +81,14 @@ class Board extends React.Component {
                         if(newNode.type === "connected-server") {
                             style = {backgroundColor: newNode.color};
                             value = "server";
-                        }  
+                        }
+                        if (newNode.isSource) {
+                            value = "SOURCE";
+                        } else if (newNode.isSink) {
+                            value = "SINK";
+                        }
                     }
                     
-
                 }
                
                 cells.push(<td key = {idKey} id= {idKey} className = {className} style = {style}>{value}</td>);  
@@ -108,14 +113,31 @@ class Board extends React.Component {
             console.log(this.state.networkDefinition);
         });
     }
+    
+    sinkHandler = (event) => {
+        this.setState({
+            sink : event.target.value
+        }, () => {console.log(this.state.sink)});
+    }
+
+    sourceHandler = (event) => {
+        this.setState({
+            source : event.target.value
+        }, () => {console.log(this.state.source)});
+    }
 
     getGeneratedGrid = (event) => {
         let rawDefinition = this.state.networkDefinition.trim();
         // get deep copy of gridArray from state
         let gridArrGen = _.cloneDeep(this.state.gridArray);
-        let pathFinder = new GridPathFinder(gridArrGen, rawDefinition, "bfs");
+        let pathFinder = new GridPathFinder(gridArrGen, this.state.source, this.state.sink, rawDefinition, "bfs");
 
         let gridPaths  = pathFinder.getGridWithPaths();
+        if (typeof gridPaths === "string") {
+            alert(gridPaths);
+            return gridPaths;
+        }
+
         let grid = gridPaths[0];
         let paths = gridPaths[1];
         
@@ -136,25 +158,27 @@ class Board extends React.Component {
             // will fix later
             // change to grid with user's network definition
             let generatedGrid = this.getGeneratedGrid();
+            if (typeof generatedGrid != "string") {
+                this.setState({
+                    gridArray: generatedGrid
+                }, () => {
+                    return this.drawBoard();
+                }); 
+            }
             
-            this.setState({
-                gridArray: generatedGrid
-            }, () => {
-                return this.drawBoard();
-            }); 
+            
         });
 
          
     }
+
+    
 
     submitHandler = (event) => {
         // Form submission automattically rerender/refreshes the page
         // prevent this behavior to display board
         event.preventDefault();
         return this.generateBoard();
-
-        
-
     }
 
     render() {
@@ -164,6 +188,8 @@ class Board extends React.Component {
                 <div className="boardDiv">
                     <form id="network-form" onSubmit={(event) => {board = this.submitHandler(event)}}>
                         <label htmlFor="network-def"> Network Definition</label>
+                        <input placeholder="Type coordinate of source node using format (x,y)" onChange={this.sourceHandler}></input>
+                        <input placeholder="Type coordinate of sink node using format (x,y)" onChange={this.sinkHandler}></input>
                         <textarea name="network-def" placeholder={this.state.networkDefinition} 
                                   onChange={this.networkDefinitionHandler} rows={10}>
                             </textarea>

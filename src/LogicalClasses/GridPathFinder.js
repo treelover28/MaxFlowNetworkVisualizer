@@ -1,11 +1,15 @@
 import Node from "./Node";
-import {getRandomColor} from "./Misc";
+import {getRandomColor, nodeParser, nodeEqual} from "./Misc";
 import _ from "lodash";
 
 
 class GridPathFinder {
-    constructor(gridArray,networkDefinition,strategy) {
+    constructor(gridArray,source, sink, networkDefinition,strategy) {
         this.gridArray = gridArray;
+        this.gridMaxX = gridArray.length;
+        this.gridMaxY = gridArray[0].length;
+        this.source = source;
+        this.sink = sink
         this.networkDefinition = networkDefinition;
         this.strategy = strategy.trim().toLowerCase();
         this.allowedStrategies = ["bfs", "dfs"];
@@ -13,10 +17,11 @@ class GridPathFinder {
 
     getGridWithPaths = () => {
         // process network definition to get sourceTargetDict
-        let sourceTargetVector = this.processNetworkDefinition();
+        let graph = this.processNetworkDefinition();
+        console.log(graph);
         // depending on this.strategy, dispatch to different function 
         if (this.allowedStrategies.includes(this.strategy)) {
-            return this.findPathsOnGrid(this.gridArray, sourceTargetVector, this.strategy);
+            return this.findPathsOnGrid(this.gridArray, graph, this.strategy);
         } else {
             return "Unknown Pathfinding strategy";
         }
@@ -25,64 +30,114 @@ class GridPathFinder {
 
     processNetworkDefinition = () => {
         let networkDef = this.networkDefinition;
-        let edgeDefinitions = networkDef.split(";").filter(x=>x);
 
+        let parsedSource = nodeParser(this.source, this.gridMaxX, this.gridMaxY);
+        let parsedSink = nodeParser(this.sink, this.gridMaxX, this.gridMaxY); 
+
+        // if source and sink are not specified, or is in invalid format, return error message
+        if (typeof parsedSource === "string" || typeof parsedSink === "string") {
+            return "Error: Invalid Source or Sink node format. Check if your coordinates are in correct format and they are within the dimension of the grid.";
+        }
+
+        let edgeDefinitions = networkDef.split(";").filter(x=>x);
         // map to keep track of {NodeA : [(NodeB, capacity), (NodeC, capacity) ...]}
-        let sourceTargetDict = new Map();
+        let graph = new Map();
         
+        let notHasSource = true;
+        let notHasSink = true;
+
         edgeDefinitions.forEach(edgeDef => {
             let edgeDefArr = edgeDef.split("->").filter(x=>x);
             let serverA = edgeDefArr[0].trim();
             let capacity = +edgeDefArr[1].trim();
             let serverB = edgeDefArr[2].trim();
 
+            let parsedA = nodeParser(serverA, this.gridMaxX, this.gridMaxY);
+            let parsedB = nodeParser(serverB, this.gridMaxX, this.gridMaxY);
+
+            if (typeof parsedA === "string" || typeof parsedB === "string") {
+                let err = "Error: Invalid network node format. Check if your coordinates are in correct format and they are within the dimension of the grid.";
+                alert(err);
+                return err;
+            }
+            
+            // if network doesn't have a source nor a sink, it trivially has a flow of 0! 
+            if (serverA === this.source || serverB === this.source) {
+                notHasSource = false;
+            }
+            if (serverA === this.sink || serverB === this.sink) {
+                notHasSink = false;
+            }
+            
             let edge = [serverB, capacity];
-            let currentEdgeList = sourceTargetDict.get(serverA);
+            let currentEdgeList = graph.get(serverA);
             if (currentEdgeList === undefined) {  
                 currentEdgeList = [edge];
             } else {
                 currentEdgeList.push(edge);
             }
-            sourceTargetDict.set(serverA, currentEdgeList);
+            graph.set(serverA, currentEdgeList);
         })
-        return sourceTargetDict;
+
+        if (notHasSource || notHasSink) {
+            let err = "Error: Network doesn't have well-defined source or sink. This network trivially has a flow of 0";
+            alert(err);
+            return err;
+        }
+        return graph;
     }
 
-    findPathsOnGrid = (gridArray, sourceTargetDict, strategy) => {
+    findPathsOnGrid = (gridArray, graph, strategy) => {
         let currNodeCoord = null;
         let currNode = null;
+
+        if (typeof graph == "string") {
+            let err = "Error! Not a valid network!";
+            alert(err);
+            return err;
+        }
         
         // keeps track of paths from different sources to their destinations
         let sourcesPathsList = new Map();
 
-        for (const [source, targets] of sourceTargetDict) {
-            let parsedSource = this.nodeParser(source);
+        let parsedSource = nodeParser(this.source,this.gridMaxX,this.gridMaxY);
+        let parsedSink = nodeParser(this.sink,this.gridMaxX, this.gridMaxY);
+
+        for (const [curr, targets] of graph) {
+            let parsedCurr = nodeParser(curr, this.gridMaxX, this.gridMaxY);
             
-            // add parseSource to sourcesPathsList with an empty list of paths at first
-            sourcesPathsList.set(parsedSource, []);
+            // add parseCurr to sourcesPathsList with an empty list of paths at first
+            sourcesPathsList.set(parsedCurr, []);
 
             let randomColor = getRandomColor();
             targets.forEach(target => {
 
                 let targetNode = target[0];
-                let parsedTargetNode = this.nodeParser(targetNode);
+                let parsedTargetNode = nodeParser(targetNode, this.gridMaxX, this.gridMaxY);
                 let capacity = +target[1];
-                let foundPath = this.pathFinderHelper(gridArray, source, targetNode, strategy);
+                let foundPath = this.pathFinderHelper(gridArray, curr, targetNode, strategy);
                 if (foundPath === "No Path found") {
-                    alert("No path found between " + source + " and " + targetNode);
+                    alert("No path found between " + curr + " and " + targetNode);
                     return "Please redefine your network by spreading the nodes out further";
                 }
 
                 // add new paths to map
-                let currPathsFromSourceList = sourcesPathsList.get(parsedSource);
+                let currPathsFromSourceList = sourcesPathsList.get(parsedCurr);
                 currPathsFromSourceList.push(_.cloneDeep(foundPath));
-                sourcesPathsList.set(parsedSource, currPathsFromSourceList);
+                sourcesPathsList.set(parsedCurr, currPathsFromSourceList);
 
                 let i = 0;
                 while (foundPath.length !== 0) {
                     currNodeCoord = foundPath.shift();
                     currNode = gridArray[+currNodeCoord[0]][+currNodeCoord[1]]; 
-                    if (currNode.type === "connected-server" || this.nodeEqual(currNodeCoord, parsedTargetNode) || this.nodeEqual(currNodeCoord, parsedSource)) {
+                    // check if currNode is a source or a sink or none
+                    if (nodeEqual(currNodeCoord,parsedSource)) {
+                        currNode.isSource = true;
+                    } else if (nodeEqual(currNodeCoord,parsedSink)) {
+                        currNode.isSink = true;
+                    }
+
+                    if (currNode.type === "connected-server" || nodeEqual(currNodeCoord, parsedTargetNode) || nodeEqual(currNodeCoord, parsedCurr)) {
                         currNode.type = "connected-server";
                     }
                     else {
@@ -103,19 +158,12 @@ class GridPathFinder {
         return [gridArray, sourcesPathsList]; 
     }
 
-    nodeParser = (coordString) => {
-        return coordString.split(/,|\)|\(/).filter(x=>x);
-    }
 
-    nodeEqual = (nodeA, nodeB) => {
-        console.log(`${nodeA[0]} and ${nodeA[1]}`);
-        return +nodeA[0] === +nodeB[0] && +nodeA[1] === +nodeB[1]; 
-    }
 
     pathFinderHelper(gridArray, source, target, strategy) { 
         let fringe = [source] 
         // parse string representation of a Node to an object
-        let parsedSource = this.nodeParser(source);
+        let parsedSource = nodeParser(source, this.gridMaxX, this.gridMaxY);
 
         let currX = +parsedSource[0];
         let currY = +parsedSource[1];
@@ -140,7 +188,7 @@ class GridPathFinder {
                 currNode = fringe.pop();
             }
             
-            let parsedNode = this.nodeParser(currNode);
+            let parsedNode = nodeParser(currNode, this.gridMaxX, this.gridMaxY);
             
             currX = +parsedNode[0];
             currY = +parsedNode[1];
@@ -182,7 +230,7 @@ class GridPathFinder {
             // change currNode back from object to its string representation
             while(currNode !== null) {
                 console.log("travelling up!");
-                path.unshift(this.nodeParser(currNode));
+                path.unshift(nodeParser(currNode, this.gridMaxX, this.gridMaxY));
                 currNode = parent.get(currNode);
             }
             return path;
