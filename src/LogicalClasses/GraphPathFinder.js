@@ -59,7 +59,6 @@ class GraphPathFinder {
                     parent.set(neighbor, currNode);
                     visited.add(neighbor);
                 }
-                
             });
         }
 
