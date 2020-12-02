@@ -7,6 +7,7 @@ class Node {
         this.color = color;
         this.isSource = false;
         this.isSink = false;
+        this.inAugmentedPath = false;
         
     }
 

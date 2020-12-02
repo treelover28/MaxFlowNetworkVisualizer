@@ -25,7 +25,6 @@ class NetworkFlow {
             targetsPaths.forEach(targetPath => {
                 // target node is the last node in the path
                 let targetNode = targetPath[targetPath.length -1];
-                console.log(`targetNode: ${targetNode}`);
                 let targetNodeString = nodeToString(targetNode);
                 let arbitraryPathNode = targetPath[targetPath.length - 2];
                 let x = arbitraryPathNode[0];

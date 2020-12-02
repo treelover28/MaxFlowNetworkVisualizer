@@ -98,7 +98,11 @@ class Board extends React.Component {
                             value = "SINK";
                         }
                     }
-                    
+
+                    if (newNode.inAugmentedPath) {
+                        // className += " inPath";
+                        style.border = "8px solid coral";
+                    }
                 }
                
                 cells.push(<td key = {idKey} id= {idKey} className = {className} style = {style}>{value}</td>);  
@@ -201,6 +205,15 @@ class Board extends React.Component {
         // get deep copy of this.state.gridArray;
         let improvedGridArray = _.cloneDeep(this.state.gridArray);
         
+        if (this.state.currentFlow != 0) {
+            // unhighlight previous path
+            for (let r = 0; r < this.state.height; r++) {
+                for (let c = 0; c < this.state.width; c++) {
+                    improvedGridArray[r][c].inAugmentedPath = false;
+                }
+            }
+        }
+        
         console.log(augmentingPath);
         let curr = this.state.source;
         // let parsedCurr = nodeParser(this.state.source, this.state.gridArray.length, this.state.gridArray[0].length);
@@ -265,12 +278,15 @@ class Board extends React.Component {
         forwardEdgesInAugmentingPath.forEach((node) => {
             // increase flow of forward edges
             improvedGridArray[node[0]][node[1]].flow += minResidual;
+            improvedGridArray[node[0]][node[1]].inAugmentedPath = true;
         });
 
         backwardEdgesInAugmentingPath.forEach((node) => {
             // decrease flow of backward edges
             improvedGridArray[node[0]][node[1]].flow -= minResidual;
+            improvedGridArray[node[0]][node[1]].inAugmentedPath = true;
         });
+
 
         return improvedGridArray;   
     }
@@ -291,7 +307,6 @@ class Board extends React.Component {
                     return this.drawBoard();
                 }); 
             }
-            // alert("Max Flow reached");
             else {
                 this.setState({
                     maxFlowReached : true

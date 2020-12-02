@@ -68,15 +68,11 @@ class GraphPathFinder {
             let simplePath = [];
             while(currNode !== this.source) {
                 // travel up to source
-                alert(currNode);
-                console.log("travelling up in findPathHelper");
                 simplePath.unshift(currNode);
                 currNode = parent.get(currNode);
             }
             simplePath.unshift(this.source);
 
-            console.log("simple path");
-            console.log(simplePath);
             let pathWithEdgeDefinition = [];
             // if there are n nodes, there are n-1 edges
             for (let i = 0; i < simplePath.length - 1; i++) {
@@ -89,8 +85,6 @@ class GraphPathFinder {
                 let edgeNotFound = true;
                 while(edgeIdx < edgesFromCurrent.length && edgeNotFound) {
                     let currEdge = edgesFromCurrent[edgeIdx];
-                    console.log("currEdge");
-                    console.log(currEdge);
                     if (currEdge.target === target) {
                         pathWithEdgeDefinition.push(currEdge);
                         edgeNotFound = false;
@@ -100,9 +94,7 @@ class GraphPathFinder {
                     }
                 }
             }
-            console.log("path with edge def");
-            console.log(pathWithEdgeDefinition);
-
+            
             return pathWithEdgeDefinition;
         }
         return "No path found from source to sink in augmented graph! Max Flow!";     
