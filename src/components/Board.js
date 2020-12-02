@@ -1,11 +1,14 @@
 import React from "react";
 import Node from "../LogicalClasses/Node";
 import GridPathFinder from "../LogicalClasses/GridPathFinder";
+import NetworkFlow from "../LogicalClasses/NetworkFlow";
+import {nodeParser, nodeEqual} from "../LogicalClasses/Misc";
 
 import _ from "lodash";
-
 import "../styles/Board.css"
 class Board extends React.Component {
+    // TODO : MAKES IT WORKS WITH BACKWARD EDGES
+    // TODO : INCREMENTAL IMPROVEMENT OF NETWORK
    
     constructor(props) {
         super(props);
@@ -18,7 +21,9 @@ class Board extends React.Component {
             networkDefinition: "Format: (x1,y1)->capacity->(x2,y2);",
             paths: [], 
             source: "null",
-            sink: "null"
+            sink: "null",
+            hasNetworkBoard : false,
+            strategy: "None"
         } 
     }
 
@@ -162,6 +167,9 @@ class Board extends React.Component {
                 this.setState({
                     gridArray: generatedGrid
                 }, () => {
+                    this.setState({
+                        hasNetworkBoard : true
+                    });
                     return this.drawBoard();
                 }); 
             }
@@ -172,7 +180,75 @@ class Board extends React.Component {
          
     }
 
+    maxFlowBoard = (strategy) => {
+        let searchType = "dfs";
+        if (strategy === "Edmonds-Karp") {
+            searchType = "bfs";
+        }
+            
+        let networkFlow = new NetworkFlow(this.state.gridArray, this.state.paths, this.state.source, this.state.sink, searchType);
+        let augmentingPath = networkFlow.getAugmentingPath();
+        
+        // if no more path, max flow reach
+        if (typeof augmentingPath === "string") {
+            alert(augmentingPath);
+            return augmentingPath;
+        }
     
+        // get deep copy of this.state.gridArray;
+        let improvedGridArray = _.cloneDeep(this.state.gridArray);
+        
+        console.log(augmentingPath);
+        let curr = this.state.source;
+        // let parsedCurr = nodeParser(this.state.source, this.state.gridArray.length, this.state.gridArray[0].length);
+        let next = null;
+        let pathsFromCurr = null;
+        let paths = this.state.paths;
+
+        let minResidual = Infinity;
+
+        let augmentingPathInGrid = [];
+        augmentingPath.forEach((edge)=> {
+            next = edge.target;
+            let parsedNext = nodeParser(next, this.state.gridArray.length, this.state.gridArray[0].length);
+            minResidual = Math.min(minResidual, edge.residual);
+            // get all paths from current node
+            pathsFromCurr = paths.get(curr);
+            // find path from current node to target node in grid
+            let path_idx = 0;
+            let foundPath = false;
+            let path = null;
+            while(path_idx < pathsFromCurr.length && !foundPath) {
+                path = pathsFromCurr[path_idx];
+
+                if (nodeEqual(parsedNext, path[path.length - 1])) {
+                    foundPath = true; 
+                }
+                path_idx++;
+            }
+            augmentingPathInGrid = augmentingPathInGrid.concat(path);
+            // advance curr to target 
+            curr = next;
+        })
+
+        augmentingPathInGrid.forEach((node) => {
+            improvedGridArray[node[0]][node[1]].flow = minResidual;
+        })
+        return improvedGridArray;   
+    }
+
+    setStrategy = (strategy) => {
+        this.setState({
+            strategy: strategy
+        }, ()=> {
+            let grid = this.maxFlowBoard(strategy);
+            this.setState({
+                gridArray : grid
+            }, ()=> {
+                return this.drawBoard();
+            }); 
+        })
+    }
 
     submitHandler = (event) => {
         // Form submission automattically rerender/refreshes the page
@@ -182,7 +258,24 @@ class Board extends React.Component {
     }
 
     render() {
-        let board = null
+        let board = null;
+
+        let algoChooser = (
+            <div id="hyperparam">
+                <h2>Please choose which max flow algorithm you wish to use:</h2>
+                <button onClick={()=> {board = this.setStrategy("Ford-Fulkerson")}}>Ford-Fulkerson</button>
+                <p>Description of Ford-Fulkerson... blah blah</p>
+                <button onClick={()=> {board = this.setStrategy("Edmonds-Karp")}}>Edmonds-Karp</button>
+                <p>Description of Edmonds-Karp... blah blah</p>
+                {this.state.strategy !== "None"? (
+                    <div>
+                        <p> You chose {this.state.strategy}</p>
+                    </div>
+                    ): null}
+            </div>
+        );
+
+
         return(
             <article className="max-flow-visualizer">
                 <div className="boardDiv">
@@ -195,6 +288,7 @@ class Board extends React.Component {
                             </textarea>
                         <input type="submit" value="Submit"></input>
                     </form>
+                    {this.state.hasNetworkBoard? algoChooser: null}
                     {board == null? this.drawBoard() : board}
                 </div>
             </article>

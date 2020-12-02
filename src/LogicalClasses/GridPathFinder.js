@@ -107,7 +107,7 @@ class GridPathFinder {
             let parsedCurr = nodeParser(curr, this.gridMaxX, this.gridMaxY);
             
             // add parseCurr to sourcesPathsList with an empty list of paths at first
-            sourcesPathsList.set(parsedCurr, []);
+            sourcesPathsList.set(curr, []);
 
             let randomColor = getRandomColor();
             targets.forEach(target => {
@@ -122,9 +122,9 @@ class GridPathFinder {
                 }
 
                 // add new paths to map
-                let currPathsFromSourceList = sourcesPathsList.get(parsedCurr);
+                let currPathsFromSourceList = sourcesPathsList.get(curr);
                 currPathsFromSourceList.push(_.cloneDeep(foundPath));
-                sourcesPathsList.set(parsedCurr, currPathsFromSourceList);
+                sourcesPathsList.set(curr, currPathsFromSourceList);
 
                 let i = 0;
                 while (foundPath.length !== 0) {

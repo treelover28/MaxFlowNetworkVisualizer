@@ -17,37 +17,42 @@ class GraphPathFinder {
 
 
     findPathHelper = () => {
+        let edgeFromSource = this.graph.get(this.source);
+        
         let fringe = [this.source];
         let parent = new Map();
         let visited = new Set();
 
-        parent.set(source, null);
-        visited.add(source);
+        parent.set(this.source, null);
+        visited.add(this.source);
 
-        let currEdge;
-        let currNode;
+        let currNode = "";
         // source : [(target, residual, forward/backward )] 
-        while(fringe.length != 0) {
+        while(fringe.length !== 0) {
+            
             // remove node from fringe depending on strategy
             if (this.strategy === "bfs") {
-                currEdge = fringe.unshift();
+                currNode = fringe.unshift();
             }
             else {
                 // dfs
-                currEdge = fringe.pop();
+                currNode = fringe.pop();
             }
-            currNode = currEdge[0];
-
+            
             if (currNode === this.sink) {
                 break;
             }
-            let neighbors = this.grid.get(currNode);
-            
-            neighbors.forEach(edgeToNeighbor => {
-                let neighbor = edgeToNeighbor[0];
-                fringe.push(edgeToNeighbor);
+
+            let neighbors = this.graph.get(currNode);
+            // console.log(neighbors);
+
+            neighbors.forEach((edgeToNeighbor) => {
+                console.log(edgeToNeighbor);
+                let neighbor = edgeToNeighbor.target;
+                console.log(neighbor);
+                fringe.push(neighbor);
                 parent.set(neighbor, currNode);
-                visitedNodes.add(neighbor);
+                visited.add(neighbor);
             })
         }
 
@@ -55,23 +60,27 @@ class GraphPathFinder {
             let simplePath = [];
             while(currNode !== null) {
                 // travel up to source
+                console.log("travelling up");
                 simplePath.unshift(currNode);
                 currNode = parent.get(currNode);
             }
- 
+            console.log("simple path");
+            console.log(simplePath);
             let pathWithEdgeDefinition = [];
             // if there are n nodes, there are n-1 edges
             for (let i = 0; i < simplePath.length - 1; i++) {
                 let current = simplePath[i];
                 let target = simplePath[i+1];
 
-                let edgesFromCurrent = this.grid.get(current); 
+                let edgesFromCurrent = this.graph.get(current); 
                 
                 let edgeIdx = 0;
                 let edgeNotFound = true;
                 while(edgeIdx < edgesFromCurrent.length && edgeNotFound) {
                     let currEdge = edgesFromCurrent[edgeIdx];
-                    if (currEdge[0] === target) {
+                    console.log("currEdge");
+                    console.log(currEdge);
+                    if (currEdge.target === target) {
                         pathWithEdgeDefinition.push(currEdge);
                         edgeNotFound = false;
                     }
