@@ -17,8 +17,6 @@ class GraphPathFinder {
 
 
     findPathHelper = () => {
-        let edgeFromSource = this.graph.get(this.source);
-        
         let fringe = [this.source];
         let parent = new Map();
         let visited = new Set();
@@ -29,10 +27,10 @@ class GraphPathFinder {
         let currNode = "";
         // source : [(target, residual, forward/backward )] 
         while(fringe.length !== 0) {
-            
+            console.log(this.strategy);
             // remove node from fringe depending on strategy
             if (this.strategy === "bfs") {
-                currNode = fringe.unshift();
+                currNode = fringe.shift();
             }
             else {
                 // dfs
@@ -43,27 +41,41 @@ class GraphPathFinder {
                 break;
             }
 
+            console.log("curNode " + currNode);
             let neighbors = this.graph.get(currNode);
-            // console.log(neighbors);
+            console.log("neighbors of currNode");
+            console.log(neighbors);
 
             neighbors.forEach((edgeToNeighbor) => {
+               
+                console.log("edgeToNeighbor");
                 console.log(edgeToNeighbor);
                 let neighbor = edgeToNeighbor.target;
-                console.log(neighbor);
-                fringe.push(neighbor);
-                parent.set(neighbor, currNode);
-                visited.add(neighbor);
-            })
+                if (!visited.has(neighbor)) {
+                    // if we already check this neighbor, dont check again
+                    // prevent cycles during path searching
+                    console.log(neighbor);
+                    fringe.push(neighbor);
+                    parent.set(neighbor, currNode);
+                    visited.add(neighbor);
+                }
+                
+            });
         }
+
+        console.log(parent);
 
         if (currNode === this.sink) {
             let simplePath = [];
-            while(currNode !== null) {
+            while(currNode !== this.source) {
                 // travel up to source
-                console.log("travelling up");
+                alert(currNode);
+                console.log("travelling up in findPathHelper");
                 simplePath.unshift(currNode);
                 currNode = parent.get(currNode);
             }
+            simplePath.unshift(this.source);
+
             console.log("simple path");
             console.log(simplePath);
             let pathWithEdgeDefinition = [];
@@ -89,6 +101,9 @@ class GraphPathFinder {
                     }
                 }
             }
+            console.log("path with edge def");
+            console.log(pathWithEdgeDefinition);
+
             return pathWithEdgeDefinition;
         }
         return "No path found from source to sink in augmented graph! Max Flow!";     

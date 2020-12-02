@@ -7,8 +7,11 @@ import {nodeParser, nodeEqual} from "../LogicalClasses/Misc";
 import _ from "lodash";
 import "../styles/Board.css"
 class Board extends React.Component {
-    // TODO : MAKES IT WORKS WITH BACKWARD EDGES
     // TODO : INCREMENTAL IMPROVEMENT OF NETWORK
+        // - Implement next button
+        // - highlight augmenting path 
+        // - remove node value from previous augmenting path
+        // - fix the infinite loop error somewhere
    
     constructor(props) {
         super(props);
@@ -176,8 +179,6 @@ class Board extends React.Component {
             
             
         });
-
-         
     }
 
     maxFlowBoard = (strategy) => {
@@ -207,10 +208,28 @@ class Board extends React.Component {
 
         let minResidual = Infinity;
 
-        let augmentingPathInGrid = [];
+        let forwardEdgesInAugmentingPath = [];
+        let backwardEdgesInAugmentingPath = [];
+
+        let edgeType = null;
         augmentingPath.forEach((edge)=> {
+            edgeType = edge.edgeType;
             next = edge.target;
+
+            if (edgeType === "backward") {
+                // swap curr and next 
+                // since pathsFromCurr only store paths corresponding to forward edges in an augmented graph 
+                let tmp = next;
+                next = curr;
+                curr = tmp;
+            }
+            // parse node "next" into coordinate representation since nodes stored in paths are in coordinate form
+            // allow easier comparison using helper function nodeEqual
             let parsedNext = nodeParser(next, this.state.gridArray.length, this.state.gridArray[0].length);
+
+            // allowed augmentation in a flow network at any time 
+            // depends on the edge with the smallest flow in the augmenting path of
+            // that respective time's residual network
             minResidual = Math.min(minResidual, edge.residual);
             // get all paths from current node
             pathsFromCurr = paths.get(curr);
@@ -226,14 +245,31 @@ class Board extends React.Component {
                 }
                 path_idx++;
             }
-            augmentingPathInGrid = augmentingPathInGrid.concat(path);
+            if (edgeType === "backward") {
+                // switch back to take on next edge in augmenting path
+                let tmp = next;
+                next = curr;
+                curr = tmp;
+                // since backward edges DECREASES the flow along that edge in the real graph
+                // must store them separately to handle flow decrease.
+                backwardEdgesInAugmentingPath = backwardEdgesInAugmentingPath.concat(path);
+            } else {
+                forwardEdgesInAugmentingPath = forwardEdgesInAugmentingPath.concat(path);
+            }
             // advance curr to target 
             curr = next;
         })
 
-        augmentingPathInGrid.forEach((node) => {
-            improvedGridArray[node[0]][node[1]].flow = minResidual;
-        })
+        forwardEdgesInAugmentingPath.forEach((node) => {
+            // increase flow of forward edges
+            improvedGridArray[node[0]][node[1]].flow += minResidual;
+        });
+
+        backwardEdgesInAugmentingPath.forEach((node) => {
+            // decrease flow of backward edges
+            improvedGridArray[node[0]][node[1]].flow -= minResidual;
+        });
+
         return improvedGridArray;   
     }
 
@@ -242,11 +278,15 @@ class Board extends React.Component {
             strategy: strategy
         }, ()=> {
             let grid = this.maxFlowBoard(strategy);
-            this.setState({
-                gridArray : grid
-            }, ()=> {
-                return this.drawBoard();
-            }); 
+            if (typeof grid !== "string") {
+                this.setState({
+                    gridArray : grid
+                }, ()=> {
+                    return this.drawBoard();
+                }); 
+            }
+            alert("Max Flow reached");
+            
         })
     }
 

@@ -18,8 +18,6 @@ class NetworkFlow {
         let augmentedGraph = new Map();
         // dictOfPath format {sourceString: [[paths...], [paths]]}
         for (const [source, targetsPaths] of this.dictOfPath) {
-            let sourceString = nodeToString(source);
-
             if (!augmentedGraph.has(source)) {
                 augmentedGraph.set(source, []);
             }
@@ -27,7 +25,7 @@ class NetworkFlow {
             targetsPaths.forEach(targetPath => {
                 // target node is the last node in the path
                 let targetNode = targetPath[targetPath.length -1];
-                // console.log(`targetNode: ${targetNode}`);
+                console.log(`targetNode: ${targetNode}`);
                 let targetNodeString = nodeToString(targetNode);
                 let arbitraryPathNode = targetPath[targetPath.length - 2];
                 let x = arbitraryPathNode[0];
@@ -53,9 +51,8 @@ class NetworkFlow {
                 if (!augmentedGraph.has(targetNodeString)) {
                     augmentedGraph.set(targetNodeString, []);
                 }
-
                 let backwardResidualsFromTarget = augmentedGraph.get(targetNodeString);
-                backwardResidualsFromTarget.push({target: sourceString, residual: flow, edgeType: "backward"});
+                backwardResidualsFromTarget.push({target: source, residual: flow, edgeType: "backward"});
                 augmentedGraph.set(targetNodeString, backwardResidualsFromTarget);
             })
         }
