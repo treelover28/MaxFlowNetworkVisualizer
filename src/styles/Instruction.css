@@ -1,0 +1,21 @@
+pre {
+  width: 50%;
+  height: 250px;
+  overflow-y: scroll;
+}
+
+.sampleNetworks,
+.instruction {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.instruction {
+  height: 10%;
+  margin: 1% 1%;
+}
+
+.guide {
+  height: 10%;
+}

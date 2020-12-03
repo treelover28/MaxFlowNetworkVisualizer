@@ -14,8 +14,15 @@
   border-collapse: collapse;
   margin: 1.5em;
   padding: 1.5em;
-  width: 80%;
+  text-align: center;
+  width: 90%;
   height: 100%;
+}
+
+.board-div {
+  display: flex;
+  justify-content: center;
+  width: 95%;
 }
 
 #network-form {
@@ -23,8 +30,8 @@
   flex-direction: column;
   justify-content: center;
   width: 40%;
-  padding: 10px 10px;
-  margin: 10px 15px;
+  padding: 5px 5px;
+  margin: 5px 5px;
 }
 
 #network-form input {
@@ -32,6 +39,52 @@
   text-align: center;
 }
 
+#flow-report {
+  text-align: center;
+  width: 30%;
+}
+
+.algo-chooser {
+  display: flex;
+  padding: 2px 2px;
+  width: 30%;
+}
+
+.algo-board {
+  display: flex;
+  flex-direction: row;
+  /* align-items: stretch; */
+  /* justify-content: space-between; */
+  width: 100%;
+}
+
+#ford-fulkerson,
+#edmonds-karp {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  text-align: center;
+  justify-content: stretch;
+  /* align-items: stretch; */
+}
+
+#ford-fulkerson button {
+  background-color: salmon; /* Green */
+}
+
+#edmonds-karp button {
+  background-color: lightblue;
+}
+
+.algo-board button {
+  border: solid;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
 .server {
   background-color: rgb(251, 161, 151);
 }

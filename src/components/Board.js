@@ -2,6 +2,7 @@ import React from "react";
 import Node from "../LogicalClasses/Node";
 import GridPathFinder from "../LogicalClasses/GridPathFinder";
 import NetworkFlow from "../LogicalClasses/NetworkFlow";
+import Instruction from "./Instruction";
 import {nodeParser, nodeEqual} from "../LogicalClasses/Misc";
 
 import _ from "lodash";
@@ -130,13 +131,13 @@ class Board extends React.Component {
     
     sinkHandler = (event) => {
         this.setState({
-            sink : event.target.value
+            sink : event.target.value.trim()
         }, () => {console.log(this.state.sink)});
     }
 
     sourceHandler = (event) => {
         this.setState({
-            source : event.target.value
+            source : event.target.value.trim()
         }, () => {console.log(this.state.source)});
     }
 
@@ -205,7 +206,7 @@ class Board extends React.Component {
         // get deep copy of this.state.gridArray;
         let improvedGridArray = _.cloneDeep(this.state.gridArray);
         
-        if (this.state.currentFlow != 0) {
+        if (this.state.currentFlow !== 0) {
             // unhighlight previous path
             for (let r = 0; r < this.state.height; r++) {
                 for (let c = 0; c < this.state.width; c++) {
@@ -321,7 +322,8 @@ class Board extends React.Component {
         event.preventDefault();
         this.setState({
             currentFlow : 0,
-            maxFlowReached : false
+            maxFlowReached : false,
+            strategy: "None"
         }, () => {
             return this.generateBoard();
         });
@@ -330,12 +332,31 @@ class Board extends React.Component {
     render() {
         let board = null;
         let algoChooser = (
-            <div id="hyperparam">
-                <h3>The flow through your network may still be improve! Please choose which max flow algorithm you wish to use:</h3>
-                <button onClick={()=> {board = this.runMaxFlowAlgorithm("Ford-Fulkerson")}}>Ford-Fulkerson</button>
-                <p>Description of Ford-Fulkerson... blah blah</p>
-                <button onClick={()=> {board = this.runMaxFlowAlgorithm("Edmonds-Karp")}}>Edmonds-Karp</button>
-                <p>Description of Edmonds-Karp... blah blah</p>
+            <div id="algo-chooser">
+                <h3>The flow through your network may still be improved! Please choose which max flow algorithm you wish to use:</h3>
+                <div className = "algo-board">
+                    <div id="ford-fulkerson">
+                        <button onClick={()=> {board = this.runMaxFlowAlgorithm("Ford-Fulkerson")}}>Ford-Fulkerson</button>
+                        <p>Ford Fulkerson finds any arbitary path in the Residual Network and uses such path to augment the flow. It keeps
+                            doing so until there is absolutely no more augmenting path possible! 
+                            
+                        </p> 
+                        <p>My implementation of 
+                            Ford-Fulkerson employs the standard Depth First Search to find the augmenting path.Due to this strategy,
+                            certain network architecture may causes Ford-Fulkerson to runs in exponential time! 
+                        </p>
+                        </div>
+                    <div id="edmonds-karp">
+                        <button onClick={()=> {board = this.runMaxFlowAlgorithm("Edmonds-Karp")}}>Edmonds-Karp</button>
+                        <p>Edmonds-Karp improves upon Ford-Fulkerson by not finding any arbitary augmenting path,
+                            but rather the shortest augmenting path in term of the number of nodes it has to travel.
+                        </p> 
+                        <p> Thus, Edmonds-Karps uses Breadth First Search to find the augmenting path. The running time 
+                            is polynomial in term of the number of nodes and vertices in the network. 
+                        </p>
+                    </div>   
+                </div>
+                
                 {this.state.strategy !== "None"? (
                     <div>
                         <p> You chose {this.state.strategy}</p>
@@ -346,15 +367,15 @@ class Board extends React.Component {
 
         let currentFlowReport = (
             <div id="flow-report">
-                <h2>Current flow through this graph is: <h1 id="flow-value">{this.state.currentFlow}</h1> </h2>
+                <h2>Current flow through this graph is: </h2>
+                <h1 id="flow-value">{this.state.currentFlow}</h1>
             </div>
         );
 
-        
-
         return(
             <article className="max-flow-visualizer">
-                <div className="boardDiv">
+                <Instruction></Instruction>
+                <div className="board-div">
                     <form id="network-form" onSubmit={(event) => {board = this.submitHandler(event)}}>
                         <label htmlFor="network-def"> Network Definition</label>
                         <input placeholder="Type coordinate of source node using format (x,y)" onChange={this.sourceHandler}></input>
@@ -366,9 +387,10 @@ class Board extends React.Component {
                     </form>
                     {/* Only display algorithm choosing panel while max flow has not been reached */}
                     {this.state.hasNetworkBoard && !this.state.maxFlowReached? algoChooser: null}
-                    {this.state.hasNetworkBoard? currentFlowReport: null};
-                    {board == null? this.drawBoard() : board}
+                    {this.state.hasNetworkBoard? currentFlowReport: null}
                 </div>
+                <div>{board == null? this.drawBoard() : board}</div>
+                
             </article>
         )
     }
