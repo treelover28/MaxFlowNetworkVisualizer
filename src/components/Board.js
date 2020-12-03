@@ -333,7 +333,8 @@ class Board extends React.Component {
         let board = null;
         let algoChooser = (
             <div id="algo-chooser">
-                <h3>The flow through your network may still be improved! Please choose which max flow algorithm you wish to use:</h3>
+                <h2>The flow through your network may still be improved!</h2>
+                <h3>Keep clicking the algorithm buttons to incrementally improve the flow through your network.</h3>
                 <div className = "algo-board">
                     <div id="ford-fulkerson">
                         <button onClick={()=> {board = this.runMaxFlowAlgorithm("Ford-Fulkerson")}}>Ford-Fulkerson</button>
@@ -372,6 +373,13 @@ class Board extends React.Component {
             </div>
         );
 
+        let boardReadingGuide = (
+            <div>
+                <h4>Note: Paths from the same origin/node will have the same color! This is to indicate where the edge is coming from!</h4>
+                <h4>After running either of the max-flow algorithm, the augmenting path through the network will be highlighted!</h4>
+            </div>
+        )
+
         return(
             <article className="max-flow-visualizer">
                 <Instruction></Instruction>
@@ -387,7 +395,11 @@ class Board extends React.Component {
                     </form>
                     {/* Only display algorithm choosing panel while max flow has not been reached */}
                     {this.state.hasNetworkBoard && !this.state.maxFlowReached? algoChooser: null}
+                    
+                </div>
+                <div className="boardReadingGuide">
                     {this.state.hasNetworkBoard? currentFlowReport: null}
+                    {this.state.hasNetworkBoard? boardReadingGuide: null}
                 </div>
                 <div>{board == null? this.drawBoard() : board}</div>
                 

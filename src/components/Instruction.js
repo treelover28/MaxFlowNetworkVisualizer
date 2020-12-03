@@ -58,18 +58,23 @@ class Instruction extends React.Component {
                     <li>Define your network architecture, by specifying the edges connecting the nodes 
                         in your network! Here are the steps:
                         <ul>
-                            <li>Type in the coordinate of your first node using the same (x,y) format</li>
+                            <li>Type in the coordinate of your first node using the same (x,y) format. 
+                                <strong>Make sure there is no space between the characters</strong></li>
                             <li>Follow by typing in a right arrow {"->"}, then type in the edge capacity</li>
                             <li>Type in another right arrow {"->"} </li>
                             <li>Type in the coordinate of the node to which the edge is connecting to, using (x,y) format</li>
                             <li> Finally terminate the current edge specification using a semi-colon {";"}</li>
+                            <li>The format is like this: {"(x,y)->edge capacity->(x2,y2);"}</li>
                         </ul>
                     </li>
-                    <li>The format is like this: {"(x,y)->edge capacity->(x2,y2);"}</li>
+                    <li>You only need to specify which edge connects which two nodes. The visualizers will handle drawing the 
+                        path representative of such edge in the grid-world! 
+                    </li>     
                 </ol>
                 </div>
                 <div>
                     <p>Here are some sample networks you can try out! Just copy and paste them to the appropriate places!</p>
+                    <p>Note: for the source and sink, please only copy and paste the coordinates (x,y)</p>
                     <div className = "sampleNetworks">
                         <pre className = "sample">{this.state.sampleProgram1}</pre>
                         <pre className = "sample">{this.state.sampleProgram2}</pre>
